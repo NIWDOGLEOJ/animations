@@ -1,0 +1,71 @@
+/* ==========================================================================
+   Rolling Text Animation - DevFest Interactive Hover Effect
+   Two modes available:
+   1. CSS-Only Word Roll (zero dependencies, works out of the box)
+   2. Staggered Character Roll (enhanced with JS for split letters)
+   ========================================================================== */
+
+/* Outer container that hides overflowing text */
+.rolling-text {
+  position: relative;
+  display: inline-flex;
+  overflow: hidden;
+  vertical-align: bottom;
+  cursor: pointer;
+  line-height: 1.2;
+}
+
+/* Layer containing primary and duplicate tracks */
+.rolling-text__item {
+  display: inline-block;
+  will-change: transform;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.rolling-text__top {
+  display: inline-block;
+  transform: translateY(0%);
+}
+
+.rolling-text__bottom {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  transform: translateY(100%);
+  user-select: none;
+}
+
+/* Trigger roll on parent link or container hover */
+.rolling-text:hover .rolling-text__top,
+a:hover .rolling-text .rolling-text__top,
+button:hover .rolling-text .rolling-text__top {
+  transform: translateY(-100%);
+}
+
+.rolling-text:hover .rolling-text__bottom,
+a:hover .rolling-text .rolling-text__bottom,
+button:hover .rolling-text .rolling-text__bottom {
+  transform: translateY(0%);
+}
+
+/* Character Stagger variant (when SplitText or JS span-splitting is used) */
+.char-roll-char {
+  display: inline-block;
+  transition: transform 0.45s cubic-bezier(0.25, 1, 0.5, 1);
+  will-change: transform;
+}
+
+.char-roll-wrap {
+  position: relative;
+  display: inline-block;
+  overflow: hidden;
+}
+
+.char-roll-clone {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+  transform: translateY(100%);
+}

@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DevFest Chennai - Animation Toolkit Showcase</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+  <!-- Component Stylesheets -->
+  <link rel="stylesheet" href="css/glow-button.css" />
+  <link rel="stylesheet" href="css/rolling-text.css" />
+  <link rel="stylesheet" href="css/google-preloader.css" />
+  <link rel="stylesheet" href="css/split-banner.css" />
+  <link rel="stylesheet" href="css/infinite-marquee.css" />
+  <link rel="stylesheet" href="css/venue-reveal.css" />
+
+  <style>
+    :root {
+      --bg: #090a0f;
+      --card-bg: rgba(18, 20, 29, 0.7);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --text: #f0f0f0;
+      --text-muted: rgba(240, 240, 240, 0.65);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      overflow-x: hidden;
+      min-height: 250vh; /* Allow generous scrolling to test 3D scroll physics */
+    }
+
+    /* 3D WebGL Canvas Layer */
+    #brackets-container {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* Main Content Container */
+    .content-wrapper {
+      position: relative;
+      z-index: 10;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 4rem 1.5rem 8rem;
+    }
+
+    header.hero {
+      text-align: center;
+      padding: 4rem 1rem 3rem;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.35rem 0.85rem;
+      border-radius: 9999px;
+      background: rgba(66, 133, 244, 0.12);
+      border: 1px solid rgba(66, 133, 244, 0.3);
+      color: #8ab4f8;
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 1.5rem;
+    }
+
+    .badge-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #4285f4;
+      box-shadow: 0 0 10px #4285f4;
+    }
+
+    h1.main-title {
+      font-size: clamp(2.5rem, 6vw, 4.5rem);
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+      margin-bottom: 1.25rem;
+    }
+
+    .subtitle {
+      font-size: clamp(1rem, 2vw, 1.25rem);
+      color: var(--text-muted);
+      max-width: 650px;
+      margin: 0 auto 2.5rem;
+      line-height: 1.6;
+    }
+
+    /* Section Cards */
+    .demo-section {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-radius: 1.5rem;
+      padding: 2.5rem;
+      margin-bottom: 3rem;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .section-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .section-desc {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin-top: 0.35rem;
+    }
+
+    .tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      padding: 0.25rem 0.6rem;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.08);
+      color: #f9ab00;
+    }
+
+    .component-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+      align-items: center;
+    }
+
+    .code-preview {
+      background: #050608;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 0.75rem;
+      padding: 1rem 1.25rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      color: #a8b3cf;
+      margin-top: 1.5rem;
+      overflow-x: auto;
+    }
+
+    /* Scroll Indicator Badge */
+    .scroll-hint {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      padding: 0.6rem 1.2rem;
+      border-radius: 9999px;
+      background: rgba(20, 22, 32, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(12px);
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--text);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    }
+
+    .mouse-icon {
+      width: 14px;
+      height: 22px;
+      border: 2px solid #fff;
+      border-radius: 10px;
+      position: relative;
+    }
+
+    .mouse-icon::after {
+      content: "";
+      position: absolute;
+      top: 4px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 2px;
+      height: 5px;
+      background: #fff;
+      border-radius: 2px;
+      animation: mouse-scroll 1.5s infinite;
+    }
+
+    @keyframes mouse-scroll {
+      0% { transform: translate(-50%, 0); opacity: 1; }
+      100% { transform: translate(-50%, 6px); opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 3D Three.js Brackets WebGL Background -->
+  <div id="brackets-container"></div>
+
+  <!-- Scroll Hint Badge -->
+  <div class="scroll-hint">
+    <div class="mouse-icon"></div>
+    <span>Scroll down to test 3D bracket orbit & color physics</span>
+  </div>
+
+  <div class="content-wrapper">
+    <!-- Header -->
+    <header class="hero">
+      <div class="badge">
+        <span class="badge-dot"></span>
+        DevFest Chennai Animation Kit
+      </div>
+      <h1 class="main-title">Extracted Interactive Animations</h1>
+      <p class="subtitle">
+        Reverse-engineered directly from <code style="color:#8ab4f8;">devfest.gdgchennai.in</code>. 
+        Ready to copy-paste into any web application or React project.
+      </p>
+
+      <div class="component-row" style="justify-content: center; margin-top: 1rem;">
+        <!-- Pill Glow Button -->
+        <button class="glow-btn" data-shape="pill">
+          <span class="glow-btn__corners" aria-hidden="true"></span>
+          <span class="glow-btn__surface">
+            <span class="glow-btn__label">
+              <span class="rolling-text">
+                <span class="rolling-text__item rolling-text__top">Get tickets →</span>
+                <span class="rolling-text__item rolling-text__bottom" aria-hidden="true">Get tickets →</span>
+              </span>
+            </span>
+          </span>
+        </button>
+
+        <!-- Submit CFP Button -->
+        <button class="glow-btn" data-shape="pill">
+          <span class="glow-btn__corners" aria-hidden="true"></span>
+          <span class="glow-btn__surface">
+            <span class="glow-btn__label">
+              <span class="rolling-text">
+                <span class="rolling-text__item rolling-text__top">Submit CFP →</span>
+                <span class="rolling-text__item rolling-text__bottom" aria-hidden="true">Submit CFP →</span>
+              </span>
+            </span>
+          </span>
+        </button>
+      </div>
+    </header>
+
+    <!-- SECTION 1: Architectural Sketch-to-Building Reveal -->
+    <section class="demo-section">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">1. Architectural Drawing → Building Transformation</h2>
+          <p class="section-desc">
+            The flagship DevFest Venue Reveal: The CAD/blueprint architectural lines trace themselves onto the screen, 
+            then ignite in an expanding cyan lens bloom as the real photograph blooms into sharp focus!
+          </p>
+        </div>
+        <div style="display: flex; gap: 0.75rem; align-items: center;">
+          <span class="tag">SVG Line Trace + Bloom Flare</span>
+          <button id="replay-venue-btn" class="glow-btn" data-shape="box">
+            <span class="glow-btn__corners" aria-hidden="true"></span>
+            <span class="glow-btn__surface">
+              <span class="glow-btn__label">🔄 Replay Transformation</span>
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Live Venue Reveal Container -->
+      <div id="venue-reveal-demo" class="venue-reveal" style="height: 520px;">
+        <div class="venue-reveal__caption">
+          <span class="venue-reveal__tagline">The Flagship Venue</span>
+          <h3 class="venue-reveal__title">IITM Research Park</h3>
+          <p class="venue-reveal__subtitle">Kanagam Road, Taramani, Chennai · Tamil Nadu 600113</p>
+        </div>
+      </div>
+
+      <div class="code-preview">
+import { VenueReveal } from "./js/venue-reveal.js";
+
+const venue = new VenueReveal("#venue-reveal-demo", {
+  svgUrl: "assets/venue-lines.svg",
+  photoUrl: "assets/venue.webp",
+  autoPlayOnScroll: true
+});
+      </div>
+    </section>
+
+    <!-- SECTION 2: Google Glow Buttons -->
+    <section class="demo-section">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">2. Signature Google Glow Buttons</h2>
+          <p class="section-desc">
+            Animated conic-gradient border rotated via CSS Houdini <code>@property --glow-angle</code>, 
+            4-corner blurred color aura, and a pointer-down burst ripple.
+          </p>
+        </div>
+        <span class="tag">CSS @property + Keyframes</span>
+      </div>
+
+      <div class="component-row">
+        <!-- Pill variant -->
+        <button class="glow-btn" data-shape="pill">
+          <span class="glow-btn__corners" aria-hidden="true"></span>
+          <span class="glow-btn__surface">
+            <span class="glow-btn__label">Pill Glow Button</span>
+          </span>
+        </button>
+
+        <!-- Box variant -->
+        <button class="glow-btn" data-shape="box">
+          <span class="glow-btn__corners" aria-hidden="true"></span>
+          <span class="glow-btn__surface">
+            <span class="glow-btn__label">Box Rounded</span>
+          </span>
+        </button>
+
+        <!-- Circle icon variant -->
+        <button class="glow-btn" data-shape="circle" aria-label="Settings">
+          <span class="glow-btn__corners" aria-hidden="true"></span>
+          <span class="glow-btn__surface">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+            </svg>
+          </span>
+        </button>
+
+        <!-- Click Burst Test -->
+        <span style="font-size: 0.85rem; color: #f9ab00; margin-left: 0.5rem;">
+          👉 Click any button to test the burst shockwave!
+        </span>
+      </div>
+
+      <div class="code-preview">
+&lt;button class="glow-btn" data-shape="pill"&gt;
+  &lt;span class="glow-btn__corners" aria-hidden="true"&gt;&lt;/span&gt;
+  &lt;span class="glow-btn__surface"&gt;
+    &lt;span class="glow-btn__label"&gt;Explore DevFest&lt;/span&gt;
+  &lt;/span&gt;
+&lt;/button&gt;
+      </div>
+    </section>
+
+    <!-- SECTION 2: Rolling Text Hover Animation -->
+    <section class="demo-section">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">2. Rolling Text Letter Cascade</h2>
+          <p class="section-desc">
+            Hover over the links below to trigger the smooth rolling text effect.
+            Supports both pure CSS word sliding and JS letter-by-letter staggering.
+          </p>
+        </div>
+        <span class="tag">Hover Animation</span>
+      </div>
+
+      <div class="component-row" style="font-size: 1.75rem; font-weight: 700; gap: 2.5rem;">
+        <!-- Demo Links -->
+        <a href="#agenda" style="color: inherit; text-decoration: none;">
+          <span data-stagger-roll>Agenda</span> →
+        </a>
+
+        <a href="#speakers" style="color: inherit; text-decoration: none;">
+          <span data-stagger-roll>Speakers</span> →
+        </a>
+
+        <a href="#tickets" style="color: inherit; text-decoration: none;">
+          <span data-stagger-roll>Tickets</span> →
+        </a>
+
+        <a href="#volunteers" style="color: inherit; text-decoration: none;">
+          <span data-stagger-roll>Become a volunteer</span> →
+        </a>
+      </div>
+
+      <div class="code-preview">
+&lt;!-- Staggered letter-by-letter auto initialized via js/rolling-text.js --&gt;
+&lt;a href="/agenda"&gt;
+  &lt;span data-stagger-roll&gt;Explore Schedule&lt;/span&gt; →
+&lt;/a&gt;
+      </div>
+    </section>
+
+    <!-- SECTION 3: Google 4-Dot Bouncing Preloader -->
+    <section class="demo-section">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">3. Google 4-Dot Bouncing Preloader</h2>
+          <p class="section-desc">
+            The canonical Google blue-red-yellow-green bouncing loader used as the site preloader.
+          </p>
+        </div>
+        <span class="tag">Preloader Animation</span>
+      </div>
+
+      <div class="component-row" style="padding: 2rem 0; justify-content: center;">
+        <div class="google-preloader">
+          <div class="google-preloader__track">
+            <div class="google-preloader__dot"></div>
+            <div class="google-preloader__dot"></div>
+            <div class="google-preloader__dot"></div>
+            <div class="google-preloader__dot"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="code-preview">
+&lt;div class="google-preloader"&gt;
+  &lt;div class="google-preloader__track"&gt;
+    &lt;div class="google-preloader__dot"&gt;&lt;/div&gt;
+    &lt;div class="google-preloader__dot"&gt;&lt;/div&gt;
+    &lt;div class="google-preloader__dot"&gt;&lt;/div&gt;
+    &lt;div class="google-preloader__dot"&gt;&lt;/div&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+      </div>
+    </section>
+
+    <!-- SECTION 4: Diagonal Split Showcase -->
+    <section class="demo-section">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">4. Diagonal Split Interactive Banner</h2>
+          <p class="section-desc">
+            Angled dual polygon <code>clip-path</code> dividing two distinct perspectives with hover zoom and atmospheric radial lighting.
+          </p>
+        </div>
+        <span class="tag">CSS Clip-Path</span>
+      </div>
+
+      <!-- Split Showcase Component -->
+      <div class="split-showcase">
+        <!-- Top Half (Present) -->
+        <div class="split-showcase__panel split-showcase__panel--top">
+          <img 
+            src="https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1200&q=80" 
+            alt="Present" 
+            class="split-showcase__bg" 
+          />
+          <div class="split-showcase__vignette--top"></div>
+          <div class="split-showcase__content split-showcase__content--top">
+            <h3 class="split-showcase__title">Present</h3>
+            <p class="split-showcase__desc">
+              Got crazy ideas or built something cool? Hardcore engineering or stunning design? Bring your main character energy to our stage.
+            </p>
+            <button class="glow-btn" data-shape="pill" style="align-self: flex-start; margin-top: 0.5rem;">
+              <span class="glow-btn__corners" aria-hidden="true"></span>
+              <span class="glow-btn__surface">
+                <span class="glow-btn__label">Submit CFP →</span>
+              </span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Bottom Half (Attend) -->
+        <div class="split-showcase__panel split-showcase__panel--bottom">
+          <img 
+            src="https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=1200&q=80" 
+            alt="Attend" 
+            class="split-showcase__bg" 
+          />
+          <div class="split-showcase__vignette--bottom"></div>
+          <div class="split-showcase__content split-showcase__content--bottom">
+            <button class="glow-btn" data-shape="pill" style="margin-bottom: 0.5rem;">
+              <span class="glow-btn__corners" aria-hidden="true"></span>
+              <span class="glow-btn__surface">
+                <span class="glow-btn__label">← Get Tickets</span>
+              </span>
+            </button>
+            <p class="split-showcase__desc">
+              Join in for the premier community experience. Meet developers, designers, and innovators. Build with the community!
+            </p>
+            <h3 class="split-showcase__title">Attend</h3>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 5: Infinite Marquee -->
+    <section class="demo-section">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">5. Infinite Marquee Ticker</h2>
+          <p class="section-desc">
+            Seamless continuous scroll with gradient edge masks (pauses on hover).
+          </p>
+        </div>
+        <span class="tag">Infinite Loop</span>
+      </div>
+
+      <div class="infinite-marquee">
+        <div class="infinite-marquee__track">
+          <span class="infinite-marquee__item">Google Cloud</span>
+          <span class="infinite-marquee__item">Android</span>
+          <span class="infinite-marquee__item">Firebase</span>
+          <span class="infinite-marquee__item">Flutter</span>
+          <span class="infinite-marquee__item">TensorFlow</span>
+          <span class="infinite-marquee__item">Gemini API</span>
+          <span class="infinite-marquee__item">Chrome DevTools</span>
+        </div>
+        <div class="infinite-marquee__track" aria-hidden="true">
+          <span class="infinite-marquee__item">Google Cloud</span>
+          <span class="infinite-marquee__item">Android</span>
+          <span class="infinite-marquee__item">Firebase</span>
+          <span class="infinite-marquee__item">Flutter</span>
+          <span class="infinite-marquee__item">TensorFlow</span>
+          <span class="infinite-marquee__item">Gemini API</span>
+          <span class="infinite-marquee__item">Chrome DevTools</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 6: Three.js Brackets Field Info -->
+    <section class="demo-section">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">6. Three.js 3D Brackets WebGL Background</h2>
+          <p class="section-desc">
+            Notice the two 3D extruded code brackets <code>{</code> and <code>}</code> floating in the background?
+            They track your mouse cursor and continuously orbit/shift color as you scroll down the page!
+          </p>
+        </div>
+        <span class="tag">Three.js WebGL</span>
+      </div>
+
+      <p style="color: var(--text-muted); line-height: 1.6;">
+        Extruded with <code>THREE.ExtrudeGeometry</code> using the exact SVG contours of the DevFest branding.
+        Equipped with studio directional lighting, roughness/metalness standard shaders, and smooth spherical interpolation across the Google palette.
+      </p>
+
+      <div class="code-preview">
+import { BracketsField } from "./js/brackets-field.js";
+
+const brackets = new BracketsField("#brackets-container", {
+  enableMouseParallax: true,
+  enableScroll: true,
+  autoRotate: true
+});
+      </div>
+    </section>
+  </div>
+
+  <!-- Three.js + SVGLoader CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/SVGLoader.js"></script>
+
+  <!-- Component Modules -->
+  <script type="module">
+    import { initGlowButtons } from "./js/glow-button.js";
+    import { initStaggerRollingText } from "./js/rolling-text.js";
+    import { BracketsField } from "./js/brackets-field.js";
+    import { VenueReveal } from "./js/venue-reveal.js";
+
+    // Initialize interactive modules
+    initGlowButtons();
+    initStaggerRollingText("[data-stagger-roll]");
+
+    // Initialize Venue Reveal (Architectural Sketch -> Building)
+    let venueInstance = null;
+    try {
+      venueInstance = new VenueReveal("#venue-reveal-demo", {
+        svgUrl: "assets/venue-lines.svg",
+        photoUrl: "assets/venue.webp",
+        autoPlayOnScroll: true
+      });
+
+      const replayBtn = document.getElementById("replay-venue-btn");
+      if (replayBtn) {
+        replayBtn.addEventListener("click", () => {
+          if (venueInstance) {
+            venueInstance.reset();
+            setTimeout(() => venueInstance.play(), 120);
+          }
+        });
+      }
+      console.log("VenueReveal initialized successfully.");
+    } catch (e) {
+      console.error("VenueReveal initialization error:", e);
+    }
+
+    // Initialize 3D Floating WebGL Brackets
+    try {
+      const field = new BracketsField("#brackets-container", {
+        enableMouseParallax: true,
+        enableScroll: true,
+        autoRotate: true
+      });
+      console.log("BracketsField initialized successfully.");
+    } catch (e) {
+      console.error("BracketsField initialization error:", e);
+    }
+  </script>
+</body>
+</html>

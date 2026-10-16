@@ -1,0 +1,93 @@
+/* ==========================================================================
+   Google 4-Dot Bouncing Preloader - DevFest Signature Loader
+   Features:
+   - 4 Google iconic brand colors (Blue, Red, Yellow, Green)
+   - Staggered bounce physics animation
+   - Supports both full-screen overlay and compact inline widget
+   ========================================================================== */
+
+:root {
+  --g-blue: #4285f4;
+  --g-red: #ea4335;
+  --g-yellow: #f9ab00;
+  --g-green: #34a853;
+}
+
+/* Container */
+.google-preloader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  width: 100%;
+}
+
+/* Full-screen overlay mode */
+.google-preloader--overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: #ffffff;
+  transition: opacity 0.4s ease, visibility 0.4s ease;
+}
+
+.google-preloader--hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* Dots track container */
+.google-preloader__track {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(10px, 3vw, 24px);
+}
+
+/* Individual Dot */
+.google-preloader__dot {
+  width: clamp(12px, 2.5vw, 22px);
+  height: clamp(12px, 2.5vw, 22px);
+  border-radius: 50%;
+  will-change: transform;
+  animation: google-bounce 1.25s ease-in-out infinite;
+}
+
+/* Distinct Google brand colors */
+.google-preloader__dot:nth-child(1) {
+  background-color: var(--g-blue);
+  animation-delay: 0s;
+}
+
+.google-preloader__dot:nth-child(2) {
+  background-color: var(--g-red);
+  animation-delay: 0.12s;
+}
+
+.google-preloader__dot:nth-child(3) {
+  background-color: var(--g-yellow);
+  animation-delay: 0.24s;
+}
+
+.google-preloader__dot:nth-child(4) {
+  background-color: var(--g-green);
+  animation-delay: 0.36s;
+}
+
+/* Bounce Keyframe */
+@keyframes google-bounce {
+  0%, 45%, 100% {
+    transform: translate3d(0, 0, 0);
+  }
+  22% {
+    transform: translate3d(0, -100%, 0);
+  }
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .google-preloader__dot {
+    animation: none;
+  }
+}

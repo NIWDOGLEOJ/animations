@@ -1,0 +1,171 @@
+/* ==========================================================================
+   Venue Reveal: Architectural Sketch to Real Building Transformation
+   Reverse-engineered directly from devfest.gdgchennai.in
+   Features:
+   - SVG vector blueprint line drawing with staggered path tracing
+   - Lens bloom / cyan flash burst (mix-blend-mode: screen)
+   - Real photo unblurring & blooming into focus (blur(16px) -> blur(0px))
+   - Auto-fitting aspect-ratio stage (1773 / 1167)
+   - Atmospheric dark vignette with metadata typography reveal
+   ========================================================================== */
+
+.venue-reveal {
+  position: relative;
+  width: 100%;
+  height: clamp(480px, 75vh, 720px);
+  border-radius: 1.5rem;
+  overflow: hidden;
+  background-color: #000000;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+}
+
+/* Sizing stage (Aspect ratio: 1773 / 1167 = ~1.519) */
+.venue-reveal__stage {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Layer 1: Real Photograph of the building */
+.venue-reveal__photo-layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  opacity: 0;
+  transform: scale(1.015);
+  filter: blur(16px) brightness(100%);
+  transition: opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1),
+              filter 0.85s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.85s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, filter, transform;
+}
+
+.venue-reveal__photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Layer 2: Architectural Line Drawing SVG */
+.venue-reveal__lines-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 1;
+  /* Exact calibration values from DevFest source */
+  transform: translate(0.9%, 1.82%) scale(1.024, 0.96) rotate(0.1deg);
+  transform-origin: 50% 50%;
+  transition: opacity 0.3s ease;
+  z-index: 10;
+}
+
+.venue-reveal__lines-layer svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.venue-reveal__lines-layer path {
+  fill: none !important;
+  stroke: #c8ebff;
+  stroke-width: 1.5px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+/* Fallback CSS stroke drawing animation when GSAP DrawSVG is not present */
+.venue-reveal--animating .venue-reveal__lines-layer path {
+  stroke-dasharray: 1200;
+  stroke-dashoffset: 1200;
+  animation: venue-trace-path 1.6s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+@keyframes venue-trace-path {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Layer 3: Cyan Bloom / Lens Flash Flare */
+.venue-reveal__flash {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-color: rgba(200, 235, 255, 1);
+  mix-blend-mode: screen;
+  opacity: 0;
+  transform: scale(0.97);
+  transform-origin: 50% 50%;
+  z-index: 15;
+  will-change: opacity, transform;
+}
+
+/* Layer 4: Vignette gradient overlay */
+.venue-reveal__vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 20;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.3) 45%, transparent 100%);
+  opacity: 0;
+  transition: opacity 0.7s ease;
+}
+
+/* Layer 5: Typography & Details */
+.venue-reveal__caption {
+  position: absolute;
+  inset-x: 0;
+  bottom: 0;
+  z-index: 30;
+  padding: clamp(1.5rem, 4vw, 3rem);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.venue-reveal__tagline {
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #8ab4f8;
+}
+
+.venue-reveal__title {
+  font-size: clamp(1.75rem, 4vw, 3rem);
+  font-weight: 800;
+  line-height: 1.1;
+  color: #ffffff;
+  letter-spacing: -0.02em;
+}
+
+.venue-reveal__subtitle {
+  font-size: clamp(0.9rem, 1.5vw, 1.15rem);
+  color: rgba(255, 255, 255, 0.75);
+}
+
+/* Active Completed State */
+.venue-reveal--completed .venue-reveal__lines-layer {
+  opacity: 0;
+}
+
+.venue-reveal--completed .venue-reveal__photo-layer {
+  opacity: 1;
+  transform: scale(1);
+  filter: blur(0px) brightness(80%);
+}
+
+.venue-reveal--completed .venue-reveal__vignette,
+.venue-reveal--completed .venue-reveal__caption {
+  opacity: 1;
+  transform: translateY(0);
+}

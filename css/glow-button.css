@@ -1,0 +1,227 @@
+/* ==========================================================================
+   Google Glow Button - DevFest Signature Animation
+   Features:
+   - Animated Conic-Gradient border rotating via CSS @property --glow-angle
+   - Multi-color 4-corner radial aura (Red, Yellow, Green, Blue)
+   - Dual-masking border technique (pure CSS, no wrapper divs needed)
+   - Interactive burst animation on pointer down
+   ========================================================================== */
+
+@property --glow-angle {
+  syntax: "<angle>";
+  inherits: true;
+  initial-value: 0deg;
+}
+
+:root {
+  --glow-red: #ea4335;
+  --glow-yellow: #f9ab00;
+  --glow-green: #34a853;
+  --glow-blue: #4285f4;
+  --glow-paper: #f0f0f0;
+  --glow-ink: #000000;
+}
+
+/* Base button container */
+.glow-btn {
+  isolation: isolate;
+  --glow-angle: 0deg;
+  -webkit-tap-highlight-color: transparent;
+  display: inline-block;
+  position: relative;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: none;
+  animation: 6s linear infinite glow-rotate;
+}
+
+/* Conic gradient for rotating border and back glow */
+.glow-btn::before,
+.glow-btn::after {
+  content: "";
+  border-radius: inherit;
+  background: conic-gradient(
+    from var(--glow-angle),
+    var(--glow-red),
+    var(--glow-yellow),
+    var(--glow-green),
+    var(--glow-blue),
+    var(--glow-red)
+  );
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+}
+
+/* 1.5px glowing border using CSS masking technique */
+.glow-btn::before {
+  z-index: 1;
+  padding: 1.5px;
+  -webkit-mask-image: linear-gradient(#fff 0 0), linear-gradient(#fff 0 0);
+  mask-image: linear-gradient(#fff 0 0), linear-gradient(#fff 0 0);
+  -webkit-mask-clip: content-box, border-box;
+  mask-clip: content-box, border-box;
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+
+/* Ambient glow under the button */
+.glow-btn::after {
+  z-index: -1;
+  filter: blur(18px);
+  opacity: 0;
+  inset: -10px;
+  transition: opacity 0.3s ease;
+}
+
+.glow-btn:hover::after {
+  opacity: 0.35;
+}
+
+/* 4-Corner Multi-color Glow Aura */
+.glow-btn__corners {
+  content: "";
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.5;
+  filter: blur(12px);
+  mix-blend-mode: screen;
+  background: 
+    radial-gradient(closest-side, var(--glow-red), transparent 70%) 0% 0% / 55% 100% no-repeat,
+    radial-gradient(closest-side, var(--glow-yellow), transparent 70%) 100% 0% / 55% 100% no-repeat,
+    radial-gradient(closest-side, var(--glow-blue), transparent 70%) 100% 100% / 55% 100% no-repeat,
+    radial-gradient(closest-side, var(--glow-green), transparent 70%) 0% 100% / 55% 100% no-repeat;
+  transition: opacity 0.25s, filter 0.25s;
+  position: absolute;
+  inset: -20px;
+}
+
+.glow-btn:hover .glow-btn__corners {
+  opacity: 0.8;
+  filter: blur(16px);
+}
+
+/* Inner Surface */
+.glow-btn__surface {
+  z-index: 2;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: inherit;
+  color: var(--glow-paper);
+  background: color-mix(in srgb, var(--glow-paper) 10%, transparent);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  box-shadow: 
+    inset 0 1px 0 color-mix(in srgb, var(--glow-paper) 25%, transparent),
+    inset 0 -6px 16px color-mix(in srgb, var(--glow-ink) 35%, transparent);
+  transition: transform 0.15s ease, background 0.15s ease;
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.glow-btn:hover .glow-btn__surface {
+  background: color-mix(in srgb, var(--glow-paper) 16%, transparent);
+}
+
+.glow-btn:active .glow-btn__surface {
+  transform: scale(0.96);
+}
+
+.glow-btn__label {
+  position: relative;
+  z-index: 3;
+}
+
+/* Shape Variants */
+.glow-btn[data-shape="pill"],
+.glow-btn.glow-btn--pill {
+  border-radius: 9999px;
+}
+.glow-btn[data-shape="pill"] .glow-btn__surface,
+.glow-btn.glow-btn--pill .glow-btn__surface {
+  padding: 0.65rem 1.75rem;
+}
+
+.glow-btn[data-shape="box"],
+.glow-btn.glow-btn--box {
+  border-radius: 1rem;
+}
+.glow-btn[data-shape="box"] .glow-btn__surface,
+.glow-btn.glow-btn--box .glow-btn__surface {
+  padding: 0.65rem 1.25rem;
+}
+
+.glow-btn[data-shape="circle"],
+.glow-btn.glow-btn--circle {
+  border-radius: 50%;
+}
+.glow-btn[data-shape="circle"] .glow-btn__surface,
+.glow-btn.glow-btn--circle .glow-btn__surface {
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+}
+
+/* Burst Interaction State */
+.glow-btn--burst {
+  will-change: filter;
+  contain: layout;
+}
+
+.glow-btn--burst::after {
+  animation: 0.9s ease-in-out glow-burst;
+}
+
+.glow-btn--burst .glow-btn__corners {
+  animation: 0.65s ease-out corner-burst;
+}
+
+/* Keyframes */
+@keyframes glow-rotate {
+  to {
+    --glow-angle: 360deg;
+  }
+}
+
+@keyframes glow-burst {
+  0% {
+    opacity: 0;
+    filter: blur(18px);
+    inset: -10px;
+  }
+  35% {
+    opacity: 0.45;
+    filter: blur(24px);
+    inset: -14px;
+  }
+  100% {
+    opacity: 0;
+    filter: blur(18px);
+    inset: -10px;
+  }
+}
+
+@keyframes corner-burst {
+  0% {
+    opacity: 0.5;
+    filter: blur(12px);
+    inset: -20px;
+  }
+  30% {
+    opacity: 0.95;
+    filter: blur(26px);
+    inset: -34px;
+  }
+  100% {
+    opacity: 0.5;
+    filter: blur(12px);
+    inset: -20px;
+  }
+}
